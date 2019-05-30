@@ -2,6 +2,7 @@ defmodule KV.RegistryTest do
   use ExUnit.Case, async: true
 
   setup do
+    # guarantees the registry will be restarted between tests
     registry = start_supervised!(KV.Registry)
     %{registry: registry}
   end
