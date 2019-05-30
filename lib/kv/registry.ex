@@ -50,7 +50,7 @@ defmodule KV.Registry do
     if Map.has_key?(names, name) do
       {:noreply, names}
     else
-      {:ok, pid} = KV.Bucket.start_link([])
+      {:ok, pid} = KV.Bucket.start([])
       ref = Process.monitor(pid)
       refs = Map.put(refs, ref, name)
       names = Map.put(names, name, pid)
