@@ -64,7 +64,7 @@ defmodule KV.Registry do
     {:noreply, {names, refs}}
   end
 
-  # def handle_info(_msg, state) do
-  #   {:noreply, state}
-  # end
+  def handle_info(_msg, state) do
+     {:noreply, state}
+  end
 end
