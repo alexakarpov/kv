@@ -1,6 +1,6 @@
 defmodule KV.Registry do
   use GenServer
-
+  require Logger
   ## Client API
 
   @doc """
@@ -9,7 +9,6 @@ defmodule KV.Registry do
   `name` is always required
   """
   def start_link(opts) do
-    # 1. Pass the name to GenServer's init
     server = Keyword.fetch!(opts, :name)
     GenServer.start_link(__MODULE__, server, opts)
   end
@@ -24,7 +23,6 @@ defmodule KV.Registry do
       [{^name, pid}] -> {:ok, pid}
       [] -> :error
     end
-    #GenServer.call(server, {:lookup, name})
   end
 
   @doc """
@@ -41,6 +39,13 @@ defmodule KV.Registry do
     GenServer.stop(server)
   end
 
+  def count(server) do
+    case GenServer.call(server, :count) do
+      {:ok, n} -> n
+      _ -> :error
+    end
+  end
+
   ## Server Callbacks
 
   def init(table) do
@@ -52,6 +57,19 @@ defmodule KV.Registry do
   def handle_call({:lookup, name}, _from, state) do
     {names, _} = state
     {:reply, Map.fetch(names, name), state}
+  end
+
+  def handle_call({:hello, name}, _from, state) do
+    {:reply, :world, state}
+  end
+
+  # def handle_call({:put, key, value}, from, state) do
+  #   Logger.info "#{__MODULE__} (GenServer) got a K/V put from #{inspect from}"
+  #   {:reply, Map.fetch(names, key), state}
+  # end
+
+  def handle_call(:count, _from, {names, refs}) do
+    {:reply, Keyword.fetch(:ets.info(names), :size), {names, refs}}
   end
 
   def handle_call({:create, name}, _from, {names, refs}) do

@@ -12,8 +12,10 @@ defmodule KV.RegistryTest do
     KV.Registry.create(registry, "shopping")
     assert {:ok, bucket} = KV.Registry.lookup(registry, "shopping")
 
-    # KV.Bucket.put(bucket, "milk", 1)
-    # assert KV.Bucket.get(bucket, "milk") == 1
+    KV.Bucket.put(bucket, "milk", 1)
+    KV.Bucket.put(bucket, "bread", 2)
+    assert KV.Bucket.get(bucket, "milk") == 1
+    assert KV.Bucket.get(bucket, "bread") == 2
   end
 
   test "removes buckets on exit", %{registry: registry} do
@@ -45,4 +47,13 @@ defmodule KV.RegistryTest do
     # Now trying to call the dead process causes a :noproc exit
     catch_exit KV.Bucket.put(bucket, "milk", 3)
   end
+
+  test "counting registry size", %{registry: registry} do
+    KV.Registry.create(registry, "b1")
+    KV.Registry.create(registry, "b2")
+
+    assert KV.Registry.count(registry) == 2
+
+  end
+
 end
