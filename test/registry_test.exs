@@ -7,7 +7,7 @@ defmodule KV.RegistryTest do
   end
 
   test "spawns buckets", %{registry: registry} do
-    assert KV.Registry.lookup(registry, "shopping") == :error
+    assert KV.Registry.lookup(registry, "shopping") == {:error, :no_such_bucket}
 
     KV.Registry.create(registry, "shopping")
     assert {:ok, bucket} = KV.Registry.lookup(registry, "shopping")
@@ -23,7 +23,7 @@ defmodule KV.RegistryTest do
     {:ok, bucket} = KV.Registry.lookup(registry, "shopping")
     Agent.stop(bucket)
     _ = KV.Registry.create(registry, "bogus")
-    assert KV.Registry.lookup(registry, "shopping") == :error
+    assert KV.Registry.lookup(registry, "shopping") == {:error, :no_such_bucket}
   end
 
   test "removes bucket on crash", %{registry: registry} do
@@ -34,7 +34,7 @@ defmodule KV.RegistryTest do
     Agent.stop(bucket, :shutdown)
     _ = KV.Registry.create(registry, "bogus")
 
-    assert KV.Registry.lookup(registry, "shopping") == :error
+    assert KV.Registry.lookup(registry, "shopping") == {:error, :no_such_bucket}
   end
 
   test "bucket can crash at any time", %{registry: registry} do
@@ -53,7 +53,6 @@ defmodule KV.RegistryTest do
     KV.Registry.create(registry, "b2")
 
     assert KV.Registry.count(registry) == 2
-
   end
 
 end

@@ -6,7 +6,7 @@ defmodule KV.Registry do
   @doc """
   Starts the registry.
 
-  `name` is always required
+  A registry requires a name
   """
   def start_link(opts) do
     server = Keyword.fetch!(opts, :name)
@@ -16,12 +16,12 @@ defmodule KV.Registry do
   @doc """
   Looks up the bucket pid for `name` stored in `server`.
 
-  Returns `{:ok, pid}` if the bucket exists, `:error` otherwise.
+  Returns `{:ok, pid}` if the bucket exists, `:no_such_bucket` otherwise.
   """
   def lookup(server, name) do
     case :ets.lookup(server, name) do
       [{^name, pid}] -> {:ok, pid}
-      [] -> :error
+      [] -> {:error, :no_such_bucket}
     end
   end
 
@@ -42,7 +42,9 @@ defmodule KV.Registry do
   def count(server) do
     case GenServer.call(server, :count) do
       {:ok, n} -> n
-      _ -> :error
+      x ->
+        IO.puts x
+        :error
     end
   end
 
@@ -54,29 +56,31 @@ defmodule KV.Registry do
     {:ok, {names, refs}}
   end
 
-  def handle_call({:lookup, name}, _from, state) do
-    {names, _} = state
+  def handle_call({:lookup, name}, _from, {names, _} = state) do
     {:reply, Map.fetch(names, name), state}
   end
 
-  def handle_call({:hello, name}, _from, state) do
-    {:reply, :world, state}
+  def handle_call({:put, name, key, value}, from, {names, _} = state) do
+    Logger.info "#{__MODULE__} (GenServer) got a K/V put from #{inspect from} for bucket #{name}, key #{key} and value #{value}"
+    case KV.Registry.lookup(names, name) do
+      {:ok, bucket} -> {:reply, "got something" , state}
+      x ->
+        Logger.error "what? #{x}"
+        create(self(), name)
+    end
   end
-
-  # def handle_call({:put, key, value}, from, state) do
-  #   Logger.info "#{__MODULE__} (GenServer) got a K/V put from #{inspect from}"
-  #   {:reply, Map.fetch(names, key), state}
-  # end
 
   def handle_call(:count, _from, {names, refs}) do
-    {:reply, Keyword.fetch(:ets.info(names), :size), {names, refs}}
+    {:ok, count} = Keyword.fetch(:ets.info(names),
+      :size)
+    {:reply, {:ok , count}, {names, refs}}
   end
 
-  def handle_call({:create, name}, _from, {names, refs}) do
+  def handle_call({:create, name}, _from, state = {names, refs}) do
     case lookup(names, name) do
       {:ok, pid} ->
         {:reply, pid, {names, refs}}
-      :error ->
+      {:error, :no_such_bucket} ->
         {:ok, pid} = DynamicSupervisor.start_child(KV.BucketSupervisor, KV.Bucket)
         ref = Process.monitor(pid)
         refs = Map.put(refs, ref, name)
@@ -90,7 +94,7 @@ defmodule KV.Registry do
     case lookup(names, name) do
       {:ok, _pid} ->
         {:noreply, {names, refs}}
-      :error ->
+      {:error, :no_such_bucket} ->
         {:ok, pid} = DynamicSupervisor.start_child(KV.BucketSupervisor, KV.Bucket)
         ref = Process.monitor(pid)
         refs = Map.put(refs, ref, name)

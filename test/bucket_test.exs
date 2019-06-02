@@ -21,14 +21,7 @@ defmodule KV.BucketTest do
 
   end
 
-  test "deletes(2) a key from the bucket", %{bucket: bucket} do
-    KV.Bucket.put(bucket, "milk", 3)
-
-    assert KV.Bucket.delete2(bucket, "milk") == 3
-    assert KV.Bucket.get(bucket, "milk") == nil
-  end
-
-  test "are temporary workers" do
+  test "are Agents temporary" do
     assert Supervisor.child_spec(KV.Bucket, []).restart == :temporary
   end
 

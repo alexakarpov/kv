@@ -16,10 +16,12 @@ defmodule KV.API do
   #GenServer.call(KV.Registry, {:hello, key})
 
   post "/cache" do
-    %{"key" => key, "value" => value} = conn.body_params
-    Logger.info "API got #{key} -> #{value} request, calling the server"
-    GenServer.call(KV.Registry, {:put, key, value})
-    send_resp(conn, 200, "POST of #{key} > #{value} was a success!")
+    %{"name" => name, "key" => key, "value" => value} = conn.body_params
+    Logger.info "API got #{key} -> #{value} request for bucket #{name}, calling the server"
+    case GenServer.call(KV.Registry, {:put, name, key, value}) do
+      {:ok, something} -> send_resp(conn, 200, "Got #{something}")
+      :error -> send_resp(conn, 400, "oops")
+    end
   end
 
   get "/cache/:key" do
@@ -28,10 +30,23 @@ defmodule KV.API do
     |> send_resp(200, Poison.encode!(message(key)))
   end
 
+  get "/size" do
+    conn
+    |> put_resp_content_type("application/json")
+    |> send_resp(200, Poison.encode!(size()))
+  end
+
   defp message(key) do
     %{
       time: DateTime.utc_now(),
       msg: "Hello #{key}"
+    }
+  end
+
+  defp size() do
+    {:ok, size} = GenServer.call(KV.Registry, :count)
+    %{
+      size: size
     }
   end
 
