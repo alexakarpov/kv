@@ -13,7 +13,8 @@ defmodule KV.Supervisor do
        name: KV.BucketSupervisor,
        strategy: :one_for_one},
       {KV.API,
-       name: KV.API}
+       name: KV.API,
+      strategy: :one_for_one}
     ]
 
     Supervisor.init(children, strategy: :one_for_all)

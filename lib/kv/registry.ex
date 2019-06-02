@@ -65,8 +65,8 @@ defmodule KV.Registry do
     case KV.Registry.lookup(names, name) do
       {:ok, bucket} -> {:reply, "got something" , state}
       x ->
-        Logger.error "what? #{x}"
-        create(self(), name)
+        Logger.error "what? #{inspect x}"
+        create(KV.Registry, name)
     end
   end
 
@@ -80,13 +80,15 @@ defmodule KV.Registry do
     case lookup(names, name) do
       {:ok, pid} ->
         {:reply, pid, {names, refs}}
-      {:error, :no_such_bucket} ->
-        {:ok, pid} = DynamicSupervisor.start_child(KV.BucketSupervisor, KV.Bucket)
-        ref = Process.monitor(pid)
-        refs = Map.put(refs, ref, name)
-        :ets.insert(names, {name, pid})
-        {:reply, pid, {names, refs}}
-    end
+      {:error, :no_such_bucket} -> execute_creation(name, names, refs)    end
+  end
+
+  def execute_creation(name, names, refs) do
+    {:ok, pid} = DynamicSupervisor.start_child(KV.BucketSupervisor, KV.Bucket)
+    ref = Process.monitor(pid)
+    refs = Map.put(refs, ref, name)
+    :ets.insert(names, {name, pid})
+    {:reply, pid, {names, refs}}
   end
 
   def handle_cast({:create, name}, {names, refs}) do

@@ -33,7 +33,6 @@ defmodule KV.RegistryTest do
     # Stop the bucket with non-normal reason
     Agent.stop(bucket, :shutdown)
     _ = KV.Registry.create(registry, "bogus")
-
     assert KV.Registry.lookup(registry, "shopping") == {:error, :no_such_bucket}
   end
 
