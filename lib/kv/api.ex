@@ -1,7 +1,8 @@
-defmodule LRUCache.API do
-  IO.puts "#{__MODULE__} is being evaluated (on compilation)"
+defmodule KV.API do
+  require Logger
+
+  IO.puts "#{__MODULE__} is being evaluated (compiled)"
   use Plug.Router
-  IO.puts "#{__MODULE__} used Plug"
   plug(:match)
 
   plug(Plug.Parsers,
@@ -12,18 +13,13 @@ defmodule LRUCache.API do
 
   plug(:dispatch)
 
-  @doc """
-
-  """
-  def put(key, value) do
-    GenServer.call(CacheServer, {:put, key, value})
-  end
+  #GenServer.call(KV.Registry, {:hello, key})
 
   post "/cache" do
-    IO.inspect conn
     %{"key" => key, "value" => value} = conn.body_params
-    IO.puts "got #{key} => #{value}"
-    send_resp(conn, 200, "POST success!")
+    Logger.info "API got #{key} -> #{value} request, calling the server"
+    GenServer.call(KV.Registry, {:put, key, value})
+    send_resp(conn, 200, "POST of #{key} > #{value} was a success!")
   end
 
   get "/cache/:key" do
@@ -51,7 +47,7 @@ defmodule LRUCache.API do
   end
 
   def start_link(_opts) do
-    IO.puts "API's start_link executing"
+    IO.puts "#{__MODULE__}.start_link/1 executing"
     Plug.Cowboy.http(__MODULE__, [])
   end
 

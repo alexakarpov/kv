@@ -11,7 +11,9 @@ defmodule KV.Supervisor do
        name: KV.Registry},
       {DynamicSupervisor,
        name: KV.BucketSupervisor,
-       strategy: :one_for_one}
+       strategy: :one_for_one},
+      {KV.API,
+       name: KV.API}
     ]
 
     Supervisor.init(children, strategy: :one_for_all)
