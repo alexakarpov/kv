@@ -2,7 +2,7 @@ defmodule KV.Bucket do
   use Agent, restart: :temporary
 
   @doc """
-  Starts (and links) new bucket.
+  Starts (and links) a new empty bucket.
   """
   def start_link(_opts) do
     Agent.start_link(fn -> %{} end)
@@ -36,18 +36,6 @@ defmodule KV.Bucket do
   """
   def delete(bucket, key) do
     Agent.get_and_update(bucket, &Map.pop(&1, key))
-  end
-
-  @doc """
-  Don't be scared of anonymous functions.
-  Deletes `key` from `bucket`.
-
-  Returns the current value of `key`, if `key` exists.
-  """
-  def delete2(bucket, key) do
-    Agent.get_and_update(bucket, fn dict ->
-      Map.pop(dict, key)
-    end)
   end
 
 end
