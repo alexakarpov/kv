@@ -48,6 +48,7 @@ defmodule KV.RegistryTest do
   end
 
   test "counting registry size", %{registry: registry} do
+    assert KV.Registry.count(registry) == 0
     KV.Registry.create(registry, "b1")
     KV.Registry.create(registry, "b2")
 

@@ -60,14 +60,13 @@ defmodule KV.Registry do
     {:reply, Map.fetch(names, name), state}
   end
 
-  def handle_call({:put, name, key, value}, from, {names, _} = state) do
+  def handle_call({:put, name, key, value}, from, {names, refs} = state) do
     Logger.info "#{__MODULE__} (GenServer) got a K/V put from #{inspect from} for bucket #{name}, key #{key} and value #{value}"
     case KV.Registry.lookup(names, name) do
       {:ok, bucket} -> {:reply, "got something" , state}
       x ->
-        Logger.error "what? #{inspect x}"
-        create(KV.Registry, name)
-    end
+        Logger.error "booms - #{inspect x}"
+        execute_creation(name, names, refs)    end
   end
 
   def handle_call(:count, _from, {names, refs}) do
@@ -80,7 +79,8 @@ defmodule KV.Registry do
     case lookup(names, name) do
       {:ok, pid} ->
         {:reply, pid, {names, refs}}
-      {:error, :no_such_bucket} -> execute_creation(name, names, refs)    end
+      {:error, :no_such_bucket} -> execute_creation(name, names, refs)
+    end
   end
 
   def execute_creation(name, names, refs) do
@@ -112,6 +112,7 @@ defmodule KV.Registry do
   end
 
   def handle_info(_msg, state) do
-     {:noreply, state}
+    {:noreply, state}
   end
+
 end
