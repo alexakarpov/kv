@@ -14,6 +14,7 @@ defmodule KV.API.Test do
     # Assert the response and status
     assert conn.state == :sent
     assert conn.status == 200
-    assert conn.resp_body == "{\"size\":0}"
+    #assert conn.resp_body == "{\"size\":0}"
+    assert {:ok, conn.resp_body} == Poison.encode %{"size" => 0}
   end
 end
