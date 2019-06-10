@@ -61,12 +61,19 @@ defmodule KV.Registry do
   end
 
   def handle_call({:put, name, key, value}, from, {names, refs} = state) do
-    Logger.info "#{__MODULE__} (GenServer) got a K/V put from #{inspect from} for bucket #{name}, key #{key} and value #{value}"
+    Logger.debug "#{__MODULE__} (GenServer) got a K/V put from #{inspect from} for bucket #{name}, key #{key} and value #{value}"
     case KV.Registry.lookup(names, name) do
       {:ok, bucket} -> {:reply, "got something" , state}
+      {:error, :no_such_bucket } ->
+        Logger.warn "new bucket needed"
+        case execute_creation(name, names, refs) do
+          {:reply, pid, {names, refs}} -> {:reply, pid, {names, refs}}
+          y ->
+            Logger.error "booms2 - #{inspect y}"
+        end
       x ->
         Logger.error "booms - #{inspect x}"
-        execute_creation(name, names, refs)    end
+    end
   end
 
   def handle_call(:count, _from, {names, refs}) do
@@ -84,10 +91,12 @@ defmodule KV.Registry do
   end
 
   def execute_creation(name, names, refs) do
+    Logger.debug "creating new bucket #{name}"
     {:ok, pid} = DynamicSupervisor.start_child(KV.BucketSupervisor, KV.Bucket)
     ref = Process.monitor(pid)
     refs = Map.put(refs, ref, name)
     :ets.insert(names, {name, pid})
+    Logger.info "returning {:reply #{inspect pid}, {#{inspect names}, #{inspect refs}}"
     {:reply, pid, {names, refs}}
   end
 

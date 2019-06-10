@@ -21,6 +21,10 @@ defmodule KV.API do
     case GenServer.call(KV.Registry, {:put, name, key, value}) do
       {:ok, something} -> send_resp(conn, 200, "Got #{something}")
       :error -> send_resp(conn, 400, "oops")
+      x ->
+        Logger.warn "UNEXPECTED: #{inspect x}"
+        send_resp(conn, 200, "created bucket for #{name}")
+
     end
   end
 
