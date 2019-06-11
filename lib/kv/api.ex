@@ -18,7 +18,7 @@ defmodule KV.API do
   post "/cache" do
     %{"name" => name, "key" => key, "value" => value} = conn.body_params
     Logger.info "API got #{key} -> #{value} request for bucket #{name}, calling the server"
-    case GenServer.call(KV.Registry, {:put, name, key, value}) do
+    case GenServer.call(Cache, {:put, name, key, value}) do
       {:ok, something} -> send_resp(conn, 200, "Got #{something}")
       :error -> send_resp(conn, 400, "oops")
       x ->
@@ -48,7 +48,7 @@ defmodule KV.API do
   end
 
   defp size() do
-    {:ok, size} = GenServer.call(KV.Registry, :count)
+    {:ok, size} = GenServer.call(Cache, :count)
     %{
       size: size
     }
