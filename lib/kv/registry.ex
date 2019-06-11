@@ -8,9 +8,17 @@ defmodule KV.Registry do
 
   A registry requires a name
   """
+  @default %{}
   def start_link(opts) do
     server = Keyword.fetch!(opts, :name)
+    Logger.info("Start_link in #{__MODULE__} with name #{server}")
     GenServer.start_link(__MODULE__, server, opts)
+  end
+
+  @defaults %{color: "black", shape: "circle"}
+  def draw(options \\ [] ) do
+    %{color: color, shape: shape} = Enum.into(options, @defaults)
+    IO.puts("Draw a #{color} #{shape}")
   end
 
   @doc """
